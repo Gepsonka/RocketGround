@@ -1,0 +1,15 @@
+../Core/Src/LCD.c:23:13:_pull_data_and_cmd_pins_low	8	static
+../Core/Src/LCD.c:38:13:_write_and_delay	8	static
+../Core/Src/LCD.c:51:6:Clear_LCD	8	static
+../Core/Src/LCD.c:63:6:Cursor_Return_Home	8	static
+../Core/Src/LCD.c:75:6:Entry_Mode_Set	16	static
+../Core/Src/LCD.c:97:6:Display_Control	16	static
+../Core/Src/LCD.c:130:6:Cursor_Shift	16	static
+../Core/Src/LCD.c:146:6:Display_Shift	16	static
+../Core/Src/LCD.c:163:6:Interface_Init	16	static
+../Core/Src/LCD.c:196:6:Set_CGRAM_Address	16	static
+../Core/Src/LCD.c:213:6:Set_DDRAM_Address	16	static
+../Core/Src/LCD.c:232:6:Write_Data_to_RAM	16	static
+../Core/Src/LCD.c:255:6:Power_On_LCD_8_Bit_Mode	8	static
+../Core/Src/LCD.c:291:6:Init_LCD	8	static
+../Core/Src/LCD.c:305:6:Write_String_to_LCD	24	static
