@@ -18,13 +18,15 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "i2c.h"
 #include "spi.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "relay.h"
 #include "LCD.h"
+#include "relay.h"
+#include "bmp280.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -44,6 +46,11 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+
+float pressure, temperature, humidity;
+
+uint16_t size;
+uint8_t Data[256];
 
 /* USER CODE END PV */
 
@@ -87,16 +94,26 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_SPI1_Init();
+  MX_I2C1_Init();
+  MX_I2C2_Init();
   /* USER CODE BEGIN 2 */
-  Power_On_LCD_8_Bit_Mode();
-  Write_String_to_LCD("Hello");
+  lcd_init();
+
+  uint8_t data;
+  HAL_StatusTypeDef status = HAL_I2C_Mem_Read(&hi2c1, BMP280_I2C_ADDRESS_0 << 1, 0xD0, 1, &data, 1, 5000);
+  HAL_Delay(500);
+
+  Clear_LCD();
+  LCD_Set_Cursor(2, 6);
+  lcd_send_string("Welcome!");
+  HAL_Delay(3000);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  Write_String_to_LCD("Hello");
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -154,7 +171,10 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
 
+}
 /* USER CODE END 4 */
 
 /**
@@ -168,10 +188,6 @@ void Error_Handler(void)
   __disable_irq();
   while (1)
   {
-	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
-	  HAL_Delay(100);
-	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
-	  HAL_Delay(100);
   }
   /* USER CODE END Error_Handler_Debug */
 }

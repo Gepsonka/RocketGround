@@ -59,36 +59,24 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define B1_Pin GPIO_PIN_13
 #define B1_GPIO_Port GPIOC
-#define LCD_RS_Pin GPIO_PIN_1
-#define LCD_RS_GPIO_Port GPIOC
-#define LCD_RW_Pin GPIO_PIN_2
-#define LCD_RW_GPIO_Port GPIOC
-#define LCD_E_Pin GPIO_PIN_3
-#define LCD_E_GPIO_Port GPIOC
+#define LoRa_RESET_Pin GPIO_PIN_0
+#define LoRa_RESET_GPIO_Port GPIOA
 #define USART_TX_Pin GPIO_PIN_2
 #define USART_TX_GPIO_Port GPIOA
 #define USART_RX_Pin GPIO_PIN_3
 #define USART_RX_GPIO_Port GPIOA
+#define LoRa_CS_Pin GPIO_PIN_4
+#define LoRa_CS_GPIO_Port GPIOA
 #define LD4_Pin GPIO_PIN_5
 #define LD4_GPIO_Port GPIOA
-#define LCD_D0_Pin GPIO_PIN_0
-#define LCD_D0_GPIO_Port GPIOB
-#define LCD_D1_Pin GPIO_PIN_1
-#define LCD_D1_GPIO_Port GPIOB
-#define LCD_D2_Pin GPIO_PIN_2
-#define LCD_D2_GPIO_Port GPIOB
+#define TMS_Pin GPIO_PIN_13
+#define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14
 #define TCK_GPIO_Port GPIOA
-#define LCD_D3_Pin GPIO_PIN_3
-#define LCD_D3_GPIO_Port GPIOB
-#define LCD_D4_Pin GPIO_PIN_4
-#define LCD_D4_GPIO_Port GPIOB
-#define LCD_D5_Pin GPIO_PIN_5
-#define LCD_D5_GPIO_Port GPIOB
-#define LCD_D6_Pin GPIO_PIN_6
-#define LCD_D6_GPIO_Port GPIOB
-#define LCD_D7_Pin GPIO_PIN_7
-#define LCD_D7_GPIO_Port GPIOB
+#define SWO_Pin GPIO_PIN_3
+#define SWO_GPIO_Port GPIOB
+#define Relay_SIGNAL_Pin GPIO_PIN_9
+#define Relay_SIGNAL_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

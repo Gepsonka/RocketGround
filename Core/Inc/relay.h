@@ -9,10 +9,12 @@
 #define INC_RELAY_H_
 
 #include "stm32l4xx_hal.h"
-#include "gpio.h"
 
-void Relay_On();
-void Relay_Off();
+/*
+ * Low level lib for controlling the relay.
+ */
+
+void Turn_Relay_Off();
 
 
 #endif /* INC_RELAY_H_ */

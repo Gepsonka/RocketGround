@@ -6,308 +6,151 @@
  */
 
 
-// 2004A LCD datasheet: https://uk.beta-layout.com/download/rk/RK-10290_410.pdf
+
+/** Put this in the src folder **/
 
 #include "LCD.h"
 
-// Enable LCD pin toggle macros
-#define ENABLE_WRITE() HAL_GPIO_WritePin(LCD_CMD_PIN_PORT, LCD_E_Pin, GPIO_PIN_SET)
-#define DISABLE_WRITE() HAL_GPIO_WritePin(LCD_CMD_PIN_PORT, LCD_E_Pin, GPIO_PIN_RESET)
-#define WRITE_DELAY() HAL_Delay(LCD_WRITE_DELAY);
 
+#define SLAVE_ADDRESS_LCD (0x27 << 1) // change this according to ur setup
 
-/*
- * Repeated functionality.
- * Before each command pull all the LCD pins low.
- */
-static void _pull_data_and_cmd_pins_low(){
-	// Pull all the ctrl pins low
-	HAL_GPIO_WritePin(LCD_CMD_PIN_PORT, LCD_RS_Pin|LCD_RW_Pin|LCD_E_Pin, GPIO_PIN_RESET);
+void lcd_send_cmd (char cmd)
+{
+  char data_u, data_l;
+	uint8_t data_t[4];
+	data_u = (cmd&0xf0);
+	data_l = ((cmd<<4)&0xf0);
+	data_t[0] = data_u|0x0C;  //en=1, rs=0
+	data_t[1] = data_u|0x08;  //en=0, rs=0
+	data_t[2] = data_l|0x0C;  //en=1, rs=0
+	data_t[3] = data_l|0x08;  //en=0, rs=0
+	HAL_StatusTypeDef status = HAL_I2C_Master_Transmit (&hi2c2, SLAVE_ADDRESS_LCD,(uint8_t *) data_t, 4, 100);
+	HAL_Delay(1);
+}
 
+void lcd_send_data (char data)
+{
+	char data_u, data_l;
+	uint8_t data_t[4];
+	data_u = (data&0xf0);
+	data_l = ((data<<4)&0xf0);
+	data_t[0] = data_u|0x0D;  //en=1, rs=1
+	data_t[1] = data_u|0x09;  //en=0, rs=1
+	data_t[2] = data_l|0x0D;  //en=1, rs=1
+	data_t[3] = data_l|0x09;  //en=0, rs=1
+	HAL_StatusTypeDef status = HAL_I2C_Master_Transmit (&hi2c2, SLAVE_ADDRESS_LCD,(uint8_t *) data_t, 4, 100);
+}
 
-	// Pull all the datapins low
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D0_Pin|LCD_D1_Pin|LCD_D2_Pin|LCD_D3_Pin
-						|LCD_D4_Pin|LCD_D5_Pin|LCD_D6_Pin|LCD_D7_Pin, GPIO_PIN_RESET);
+void lcd_clear (void)
+{
+	lcd_send_cmd (0x00);
+	for (int i=0; i<100; i++)
+	{
+		lcd_send_data (' ');
+	}
+}
+
+void lcd_init (void)
+{
+	// 4 bit initialisation
+	HAL_Delay(50);  // wait for >40ms
+	lcd_send_cmd (0x30);
+	HAL_Delay(5);  // wait for >4.1ms
+	lcd_send_cmd (0x30);
+	HAL_Delay(1);  // wait for >100us
+	lcd_send_cmd (0x30);
+	HAL_Delay(10);
+	lcd_send_cmd (0x20);  // 4bit mode
+	HAL_Delay(10);
+
+  // dislay initialisation
+	lcd_send_cmd (0x28); // Function set --> DL=0 (4 bit mode), N = 1 (2 line display) F = 0 (5x8 characters)
+	HAL_Delay(1);
+	lcd_send_cmd (0x08); //Display on/off control --> D=0,C=0, B=0  ---> display off
+	HAL_Delay(1);
+	lcd_send_cmd (0x01);  // clear display
+	HAL_Delay(1);
+	HAL_Delay(1);
+	lcd_send_cmd (0x06); //Entry mode set --> I/D = 1 (increment cursor) & S = 0 (no shift)
+	HAL_Delay(1);
+	lcd_send_cmd (0x0C); //Display on/off control --> D = 1, C and B = 0. (Cursor and blink, last two bits)
+}
+
+void lcd_send_string (char *str)
+{
+	while (*str) lcd_send_data (*str++);
 }
 
 
-/*
- * Enables Write on the LCD and creates a delay needed
- * specified in the datasheet.
- */
-static void _write_and_delay(){
-	ENABLE_WRITE();
-	HAL_Delay(LCD_WRITE_DELAY);
-	DISABLE_WRITE();
-}
-
-
-
-
-
-/*
- * Clear contents on LCD and return cursor to starting position
- */
 void Clear_LCD(){
-	_pull_data_and_cmd_pins_low();
-
-	ENABLE_WRITE();
-	WRITE_DELAY();
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D0_Pin, GPIO_PIN_SET);
-	DISABLE_WRITE();
-}
-
-/*
- * Return cursor to starting position
- */
-void Cursor_Return_Home(){
-	_pull_data_and_cmd_pins_low();
-	ENABLE_WRITE();
-	WRITE_DELAY();
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D1_Pin, GPIO_PIN_SET);
-	DISABLE_WRITE();
+	lcd_send_cmd(0x01);
+	HAL_Delay(1);
 }
 
 
 /*
- * Datasheet...
+ * Set the cursor to the first unit of the line
+ * @param num_of_line desired line
  */
-void Entry_Mode_Set(DDRAMAddressDirection cursor_direction, ShiftDisplayDirection shift_direction){
-	_pull_data_and_cmd_pins_low();
-
-	ENABLE_WRITE();
-	WRITE_DELAY();
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D2_Pin, GPIO_PIN_SET);
-	switch(cursor_direction){
-	case CURSOR_DIRECTION_RIGHT:
-		HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D1_Pin, GPIO_PIN_SET);
-	case CURSOR_DIRECTION_LEFT:
-		HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D1_Pin, GPIO_PIN_RESET);
-	}
-
-	switch(shift_direction){
-	case DISPLAY_NO_SHIFT:
-		HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D0_Pin, GPIO_PIN_RESET);
+void LCD_Select_Line(uint8_t num_of_line){
+	switch (num_of_line){
+	case 1:
+		lcd_send_cmd(0x80|0x00);
+		break;
+	case 2:
+		lcd_send_cmd(0x80|0x40);
+		break;
+	case 3:
+		lcd_send_cmd(0x80|0x14);
+		break;
+	case 4:
+		lcd_send_cmd(0x80|0x54);
+		break;
 	default:
-		HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D0_Pin, GPIO_PIN_SET);
+		lcd_send_cmd(0x80|0x00);
+		break;
 	}
-	DISABLE_WRITE();
+	HAL_Delay(1);
 }
 
-void Display_Control(DisplayPower dsp_pwr, CursorMode cursor_mode, CursorBlinkMode cursor_blink_mode){
-	_pull_data_and_cmd_pins_low();
 
-	ENABLE_WRITE();
-	WRITE_DELAY();
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D3_Pin, GPIO_PIN_SET);
-	switch(dsp_pwr){
-	case DISPLAY_ON:
-		HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D2_Pin, GPIO_PIN_SET);
-	case DISPLAY_OFF:
-		HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D2_Pin, GPIO_PIN_RESET);
+void LCD_Set_Cursor(uint8_t num_of_line, uint8_t poz){
+	if (num_of_line > 4){
+		num_of_line = 4;
 	}
 
-	switch(cursor_mode){
-	case CURSOR_ON:
-		HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D1_Pin, GPIO_PIN_SET);
-	case CURSOR_OFF:
-		HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D1_Pin, GPIO_PIN_RESET);
+	if (poz > 19){
+		poz = 19;
 	}
 
-	switch(cursor_blink_mode){
-	case CURSOR_BLINK:
-		HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D0_Pin, GPIO_PIN_SET);
-	case CURSOR_NO_BLINK:
-		HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D0_Pin, GPIO_PIN_RESET);
-	}
-	DISABLE_WRITE();
-}
-
-/*
- * Shifting cursor
- * @param cursor_dir direction to move the cursor to
- */
-void Cursor_Shift(DDRAMAddressDirection cursor_dir){
-	_pull_data_and_cmd_pins_low();
-
-	ENABLE_WRITE();
-	WRITE_DELAY();
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D4_Pin, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D3_Pin, GPIO_PIN_RESET);
-	switch(cursor_dir){
-	case CURSOR_DIRECTION_RIGHT:
-		HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D2_Pin, GPIO_PIN_SET);
-	case CURSOR_DIRECTION_LEFT:
-		HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D2_Pin, GPIO_PIN_RESET);
-	}
-	DISABLE_WRITE();
-}
-
-void Display_Shift(ShiftDisplayDirection display_shift_direction){
-	_pull_data_and_cmd_pins_low();
-
-	ENABLE_WRITE();
-	WRITE_DELAY();
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D4_Pin, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D3_Pin, GPIO_PIN_SET);
-	switch(display_shift_direction){
-	case DISPLAY_SHIFT_RIGHT:
-		HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D2_Pin, GPIO_PIN_SET);
+	switch (num_of_line){
+	case 1:
+		lcd_send_cmd(0x80|(0x00+poz));
+		break;
+	case 2:
+		lcd_send_cmd(0x80|(0x40+poz));
+		break;
+	case 3:
+		lcd_send_cmd(0x80|(0x14+poz));
+		break;
+	case 4:
+		lcd_send_cmd(0x80|(0x54+poz));
+		break;
 	default:
-		HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D2_Pin, GPIO_PIN_RESET);
-	}
-	DISABLE_WRITE();
-}
-
-
-void Interface_Init(DataTransferMode data_transfer_mode, NumOfDisplayLine num_of_display_line, FontType font_type){
-	_pull_data_and_cmd_pins_low();
-
-
-	ENABLE_WRITE();
-	WRITE_DELAY();
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D5_Pin, GPIO_PIN_SET);
-
-	switch(data_transfer_mode){
-	case BIT_MODE_8:
-		HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D4_Pin, GPIO_PIN_SET);
-	case BIT_MODE_4:
-		HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D4_Pin, GPIO_PIN_RESET);
+		lcd_send_cmd(0x80|(0x00+poz));
+		break;
 	}
 
-	switch(num_of_display_line){
-	case ONE_LINE:
-		HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D3_Pin, GPIO_PIN_RESET);
-	case TWO_LINES:
-		HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D3_Pin, GPIO_PIN_SET);
-	}
-
-	switch(font_type){
-	case FONT_5X10:
-		HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D2_Pin, GPIO_PIN_SET);
-	case FONT_5X8:
-		HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D2_Pin, GPIO_PIN_RESET);
-	}
-	DISABLE_WRITE();
-}
-
-
-
-void Set_CGRAM_Address(uint8_t add){
-	_pull_data_and_cmd_pins_low();
-
-	ENABLE_WRITE();
-	WRITE_DELAY();
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D6_Pin, GPIO_PIN_SET);
-
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D5_Pin, ((add>>5)&0x01));
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D4_Pin, ((add>>4)&0x01));
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D3_Pin, ((add>>3)&0x01));
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D2_Pin, ((add>>2)&0x01));
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D1_Pin, ((add>>1)&0x01));
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D0_Pin, ((add>>0)&0x01));
-
-	DISABLE_WRITE();
+	HAL_Delay(1);
 }
 
 void Set_DDRAM_Address(uint8_t add){
-	_pull_data_and_cmd_pins_low();
-
-	ENABLE_WRITE();
-	WRITE_DELAY();
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D7_Pin, GPIO_PIN_SET);
-
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D6_Pin, ((add>>6)&0x01));
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D5_Pin, ((add>>5)&0x01));
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D4_Pin, ((add>>4)&0x01));
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D3_Pin, ((add>>3)&0x01));
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D2_Pin, ((add>>2)&0x01));
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D1_Pin, ((add>>1)&0x01));
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D0_Pin, ((add>>0)&0x01));
-
-	DISABLE_WRITE();
-}
-
-
-void Write_Data_to_RAM(uint8_t data){
-	_pull_data_and_cmd_pins_low();
-
-	ENABLE_WRITE();
-	WRITE_DELAY();
-	HAL_GPIO_WritePin(LCD_CMD_PIN_PORT, LCD_RS_Pin, GPIO_PIN_SET);
-
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D7_Pin, ((data>>7)&0x01));
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D6_Pin, ((data>>6)&0x01));
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D5_Pin, ((data>>5)&0x01));
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D4_Pin, ((data>>4)&0x01));
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D3_Pin, ((data>>3)&0x01));
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D2_Pin, ((data>>2)&0x01));
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D1_Pin, ((data>>1)&0x01));
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D0_Pin, ((data>>0)&0x01));
-
-	DISABLE_WRITE();
-}
-
-
-// Higher level functions
-
-// LCD startup sequence
-void Power_On_LCD_8_Bit_Mode(){
-	HAL_Delay(30);
-
-
-	ENABLE_WRITE();
-	WRITE_DELAY();
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D5_Pin, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D4_Pin, GPIO_PIN_SET);
-	DISABLE_WRITE();
-
-	HAL_Delay(8);
-
-	ENABLE_WRITE();
-	WRITE_DELAY();
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D5_Pin, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D4_Pin, GPIO_PIN_SET);
-	DISABLE_WRITE();
-
-	HAL_Delay(1);
-
-	ENABLE_WRITE();
-	WRITE_DELAY();
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D5_Pin, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(LCD_DATA_PIN_PORT, LCD_D4_Pin, GPIO_PIN_SET);
-	DISABLE_WRITE();
-
-	HAL_Delay(1);
-
-
-	Interface_Init(BIT_MODE_8, ONE_LINE, FONT_5X10);
-	Display_Control(DISPLAY_ON, CURSOR_ON, CURSOR_BLINK);
-	Clear_LCD();
-	Entry_Mode_Set(CURSOR_DIRECTION_RIGHT, DISPLAY_NO_SHIFT);
-
-}
-
-void Init_LCD(){
-	HAL_Delay(100);
-	Clear_LCD();
-	HAL_Delay(10);
-	Interface_Init(BIT_MODE_8, ONE_LINE, FONT_5X10);
-	HAL_Delay(100);
-	Display_Control(DISPLAY_ON, CURSOR_ON, CURSOR_BLINK);
-	HAL_Delay(10);
-	Entry_Mode_Set(CURSOR_DIRECTION_RIGHT, DISPLAY_NO_SHIFT);
-	HAL_Delay(10);
-	Cursor_Return_Home();
-
-}
-
-void Write_String_to_LCD(char* str){
-	for(int i=0;i<strlen(str);i++){
-		Write_Data_to_RAM(str[i]);
+	if (add > 0x67){
+		add = 0x67;
 	}
+	lcd_send_cmd(0x80|add);
+	HAL_Delay(1);
 }
-
 
 
 
