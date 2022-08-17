@@ -16,5 +16,11 @@
 
 void Turn_Relay_Off();
 
+void Turn_Relay_On();
+
+void Toggle_Relay();
+
+void Write_Relay(uint8_t state);
+
 
 #endif /* INC_RELAY_H_ */

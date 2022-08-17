@@ -8,6 +8,11 @@
 #ifndef INC_LCD_H_
 #define INC_LCD_H_
 
+#define SLAVE_ADDRESS_LCD (0x27 << 1) // change this according to ur setup
+
+#define LCD_NUM_OF_LINES 4
+#define LCD_NUM_OF_ROWS 20
+
 
 #include "gpio.h"
 #include "i2c.h"
@@ -34,7 +39,12 @@ void LCD_Select_Line(uint8_t num_of_line);
 
 void LCD_Set_Cursor(uint8_t num_of_line, uint8_t poz);
 
-void Set_DDRAM_Address(uint8_t add);
+void LCD_Set_DDRAM_Address(uint8_t add);
+
+void LCD_Send_Middle_Aligned_String(char* string, uint8_t num_of_line);
+
+void LCD_Send_Error_Message(char* string);
+
 
 
 #endif /* INC_LCD_H_ */

@@ -24,9 +24,11 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "LoRa.h"
 #include "LCD.h"
 #include "relay.h"
 #include "bmp280.h"
+#include "sysinit.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -51,6 +53,8 @@ float pressure, temperature, humidity;
 
 uint16_t size;
 uint8_t Data[256];
+
+lora_sx1276 LoRa1278;
 
 /* USER CODE END PV */
 
@@ -97,15 +101,13 @@ int main(void)
   MX_I2C1_Init();
   MX_I2C2_Init();
   /* USER CODE BEGIN 2 */
+  uint8_t res = lora_init(&LoRa1278, &hspi1, GPIOA, GPIO_PIN_4, LORA_BASE_FREQUENCY_EU);
   lcd_init();
 
   uint8_t data;
   HAL_StatusTypeDef status = HAL_I2C_Mem_Read(&hi2c1, BMP280_I2C_ADDRESS_0 << 1, 0xD0, 1, &data, 1, 5000);
-  HAL_Delay(500);
 
   Clear_LCD();
-  LCD_Set_Cursor(2, 6);
-  lcd_send_string("Welcome!");
   HAL_Delay(3000);
   /* USER CODE END 2 */
 
@@ -188,6 +190,10 @@ void Error_Handler(void)
   __disable_irq();
   while (1)
   {
+	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+	  HAL_Delay(200);
+	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+	  HAL_Delay(200);
   }
   /* USER CODE END Error_Handler_Debug */
 }

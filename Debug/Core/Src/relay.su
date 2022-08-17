@@ -1,1 +1,4 @@
 ../Core/Src/relay.c:16:6:Turn_Relay_Off	8	static
+../Core/Src/relay.c:21:6:Turn_Relay_On	8	static
+../Core/Src/relay.c:25:6:Toggle_Relay	8	static
+../Core/Src/relay.c:30:6:Write_Relay	16	static

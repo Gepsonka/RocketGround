@@ -50,7 +50,7 @@
 
 #define BMP280_RESET_VALUE     0xB6
 
-
+BMP280_HandleTypedef bmp280;
 
 
 void bmp280_init_default_params(bmp280_params_t *params) {

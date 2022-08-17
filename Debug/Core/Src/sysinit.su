@@ -1,0 +1,4 @@
+../Core/Src/sysinit.c:14:6:Run_Checks	8	static
+../Core/Src/sysinit.c:38:6:Is_LCD_Available	16	static
+../Core/Src/sysinit.c:47:6:Is_BMP280_Available	16	static
+../Core/Src/sysinit.c:62:6:Is_Relay_Available	16	static

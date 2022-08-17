@@ -1,4 +1,4 @@
-Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
+Core/Src/sysinit.o: ../Core/Src/sysinit.c ../Core/Inc/sysinit.h \
  ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal.h \
  ../Core/Inc/stm32l4xx_hal_conf.h \
  ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_rcc.h \
@@ -27,12 +27,9 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_pwr_ex.h \
  ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_spi.h \
  ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_spi_ex.h \
- ../Core/Inc/i2c.h ../Core/Inc/main.h ../Core/Inc/spi.h \
- ../Core/Inc/gpio.h ../Core/Inc/LoRa.h ../Core/Inc/LCD.h \
- ../Core/Inc/gpio.h ../Core/Inc/i2c.h ../Core/Inc/relay.h \
- ../Core/Inc/bmp280.h ../Core/Inc/sysinit.h ../Core/Inc/LCD.h \
- ../Core/Inc/bmp280.h ../Core/Inc/relay.h
-../Core/Inc/main.h:
+ ../Core/Inc/LCD.h ../Core/Inc/gpio.h ../Core/Inc/main.h \
+ ../Core/Inc/i2c.h ../Core/Inc/bmp280.h ../Core/Inc/relay.h
+../Core/Inc/sysinit.h:
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal.h:
 ../Core/Inc/stm32l4xx_hal_conf.h:
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_rcc.h:
@@ -61,17 +58,9 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_pwr_ex.h:
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_spi.h:
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_spi_ex.h:
-../Core/Inc/i2c.h:
+../Core/Inc/LCD.h:
+../Core/Inc/gpio.h:
 ../Core/Inc/main.h:
-../Core/Inc/spi.h:
-../Core/Inc/gpio.h:
-../Core/Inc/LoRa.h:
-../Core/Inc/LCD.h:
-../Core/Inc/gpio.h:
 ../Core/Inc/i2c.h:
-../Core/Inc/relay.h:
-../Core/Inc/bmp280.h:
-../Core/Inc/sysinit.h:
-../Core/Inc/LCD.h:
 ../Core/Inc/bmp280.h:
 ../Core/Inc/relay.h:

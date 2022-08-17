@@ -12,11 +12,10 @@
 #include "LCD.h"
 
 
-#define SLAVE_ADDRESS_LCD (0x27 << 1) // change this according to ur setup
 
 void lcd_send_cmd (char cmd)
 {
-  char data_u, data_l;
+	char data_u, data_l;
 	uint8_t data_t[4];
 	data_u = (cmd&0xf0);
 	data_l = ((cmd<<4)&0xf0);
@@ -24,7 +23,7 @@ void lcd_send_cmd (char cmd)
 	data_t[1] = data_u|0x08;  //en=0, rs=0
 	data_t[2] = data_l|0x0C;  //en=1, rs=0
 	data_t[3] = data_l|0x08;  //en=0, rs=0
-	HAL_StatusTypeDef status = HAL_I2C_Master_Transmit (&hi2c2, SLAVE_ADDRESS_LCD,(uint8_t *) data_t, 4, 100);
+	HAL_I2C_Master_Transmit (&hi2c2, SLAVE_ADDRESS_LCD,(uint8_t *) data_t, 4, 100);
 	HAL_Delay(1);
 }
 
@@ -38,7 +37,7 @@ void lcd_send_data (char data)
 	data_t[1] = data_u|0x09;  //en=0, rs=1
 	data_t[2] = data_l|0x0D;  //en=1, rs=1
 	data_t[3] = data_l|0x09;  //en=0, rs=1
-	HAL_StatusTypeDef status = HAL_I2C_Master_Transmit (&hi2c2, SLAVE_ADDRESS_LCD,(uint8_t *) data_t, 4, 100);
+	HAL_I2C_Master_Transmit (&hi2c2, SLAVE_ADDRESS_LCD,(uint8_t *) data_t, 4, 100);
 }
 
 void lcd_clear (void)
@@ -78,7 +77,10 @@ void lcd_init (void)
 
 void lcd_send_string (char *str)
 {
-	while (*str) lcd_send_data (*str++);
+	for (int i=0; i<strlen(str); i++){
+		lcd_send_data(str[i]);
+	}
+	//while (*str) lcd_send_data (*str++);
 }
 
 
@@ -144,7 +146,7 @@ void LCD_Set_Cursor(uint8_t num_of_line, uint8_t poz){
 	HAL_Delay(1);
 }
 
-void Set_DDRAM_Address(uint8_t add){
+void LCD_Set_DDRAM_Address(uint8_t add){
 	if (add > 0x67){
 		add = 0x67;
 	}
@@ -153,4 +155,76 @@ void Set_DDRAM_Address(uint8_t add){
 }
 
 
+
+void LCD_Send_Middle_Aligned_String(char* string, uint8_t num_of_line){
+	uint8_t margin_left = (uint8_t)((20 - strlen(string)) / 2);
+
+	if (strlen(string) >= 20){
+		margin_left = 0; // has to set the margin eve if we modify the text later
+	}
+
+
+	if (strlen(string) > 20){
+		char short_string[20];
+		memcpy(short_string, string, 20);
+		LCD_Set_Cursor(num_of_line, margin_left);
+		lcd_send_string(short_string);
+		return;
+	}
+
+	LCD_Set_Cursor(num_of_line, margin_left);
+	lcd_send_string(string);
+}
+
+
+void LCD_Send_Error_Message(char* string){
+	Clear_LCD();
+	LCD_Send_Middle_Aligned_String("Error!", 1);
+
+	int string_index = 0;
+	for (int i=1;i<4;i++){
+		LCD_Select_Line(i+1);
+		for (int j=0; j<20; j++){
+			if (string_index >= strlen(string)){
+				return;
+			}
+			lcd_send_data(string[string_index]);
+			string_index++;
+		}
+	}
+
+
+//	char first_line[20];
+//	if (strlen(string) <= 20 ){
+//		memcpy(first_line, string, strlen(string));
+//	} else {
+//		memcpy(first_line, string, 20);
+//	}
+//	LCD_Send_Middle_Aligned_String(first_line, 2);
+//
+//	if (strlen(string) > 20){
+//		if (strlen(string) <= 40){
+//			char second_line[20];
+//			memcpy(second_line, &string[20], strlen(string)-20);
+//			LCD_Send_Middle_Aligned_String(second_line, 3);
+//		} else {
+//			char second_line[20];
+//			memcpy(second_line, &string[20], 20);
+//			LCD_Send_Middle_Aligned_String(second_line, 3);
+//
+//			if (strlen(string) <= 60){
+//				char third_line[20];
+//				memcpy(third_line, &string[40], strlen(string)-40);
+//				LCD_Send_Middle_Aligned_String(third_line, 4);
+//			} else {
+//				char third_line[20];
+//				memcpy(third_line, &string[40], 20);
+//				LCD_Send_Middle_Aligned_String(third_line, 4);
+//			}
+//
+//
+//		}
+//	}
+
+}
 
