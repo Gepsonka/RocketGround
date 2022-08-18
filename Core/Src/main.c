@@ -115,7 +115,9 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
+	  uint8_t data;
+	  status = HAL_I2C_Mem_Read(&hi2c1, BMP280_I2C_ADDRESS_0 << 1, 0xD0, 1, &data, 1, 5000);
+	  HAL_Delay(500);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
